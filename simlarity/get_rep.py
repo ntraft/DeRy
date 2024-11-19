@@ -4,6 +4,7 @@ import math
 import os
 import time
 import warnings
+from pathlib import Path
 from tkinter.messagebox import NO
 
 import mmcv
@@ -126,7 +127,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='mmcls test model')
     parser.add_argument('config', help='test config file path')
     parser.add_argument('--checkpoint',  default='', help='checkpoint file')
-    parser.add_argument('--out', default='', help='output result file')
+    parser.add_argument('--root', default='', help='directory for output result file')
     out_options = ['class_scores', 'pred_score', 'pred_label', 'pred_class']
     parser.add_argument(
         '--out-items',
@@ -327,7 +328,9 @@ def main_block():
                            size=size,
                            feat=feat)
         # mmcv.dump(results, args.out)
-        torch.save(results, args.out)
+        outfile = Path(args.root if args.root else "features") / (Path(args.config).stem + ".pth")
+        outfile.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(results, outfile)
 
 
 if __name__ == '__main__':

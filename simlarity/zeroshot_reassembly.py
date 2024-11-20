@@ -1,5 +1,6 @@
 import argparse
 import copy
+import logging
 import warnings
 
 from tkinter.messagebox import NO
@@ -16,9 +17,10 @@ from simlarity.model_creater import Model_Creator
 from simlarity.zero_nas import ZeroNas
 from mmcv.cnn.utils import get_model_complexity_info
 
-
+# Quiet some warnings and excessive print messages.
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch")
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
+logging.getLogger("mmcv").setLevel(logging.ERROR)
 
 input_shape = (3, 224, 224)
 
@@ -31,7 +33,7 @@ def parse_args():
     parser.add_argument('--minC', type=float, default=0.)
     parser.add_argument('--flop_C', type=float, default=10.)
     parser.add_argument('--minflop_C', type=float, default=0.)
-    parser.add_argument('--trial', type=int, default=10)
+    parser.add_argument('--trials', type=int, default=10)
     parser.add_argument('--num_batch', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--zero_proxy', type=str,
@@ -62,6 +64,7 @@ def check_valid(selected_block):
     return cnn_max < vit_min
 
 
+# noinspection PyBroadException
 def main():
     args = parse_args()
     with open(args.path, 'rb') as file:
@@ -83,7 +86,7 @@ def main():
         dist=distributed,
         shuffle=False,
         round_up=True)
-    print('*'*10 + 'Dataloader Created' + '*'*10)
+    print('*' * 10 + 'Dataloader Created' + '*' * 10)
     indicator = ZeroNas(dataloader=data_loader,
                         indicator=args.zero_proxy,
                         num_batch=args.num_batch)
@@ -93,7 +96,7 @@ def main():
     best_size = 0
     best_selected_block = None
     K = len(assignment.center2block)
-    for k in range(args.trial):
+    for k in range(args.trials):
         # all_blocks = list(sorted(all_blocks, key=lambda x: x.value / x.size, reverse=True))
         random.shuffle(all_blocks)
         selected_group = [0 for _ in range(K)]
@@ -127,60 +130,62 @@ def main():
                 selected_block_index[block.block_index] = 1
                 selected_group[block.group_id] = 1
                 # if check_valid(new_select):
-                model = creator.create_hybrid(new_select)
-                if model is None:
-                    continue
-
                 try:
-                    new_flops, new_size = get_model_complexity_info(
-                        model, input_shape, print_per_layer_stat=False, as_strings=False)
-                    new_flops = round(new_flops / 10.**9, 3)
-                    new_size = sum(p.numel() for p in model.parameters())/1e6
-                except:
-                    continue
+                    model = creator.create_hybrid(new_select)
+                    if model is None:
+                        continue
 
-                if new_size <= args.maxC and new_size > args.minC and new_flops <= args.maxflop_C and new_flops > args.minflop_C:
-                    pass
-                else:
-                    print(
-                        f'current size {new_size}M, current flops {new_flops}G, \tParam Range ({args.minC}M,{args.maxC}M), \tFLOPs Range ({args.minflop_C}GFLOPs,{args.maxflop_C}GFLOPs)')
-                    continue
+                    try:
+                        new_flops, new_size = get_model_complexity_info(
+                            model, input_shape, print_per_layer_stat=False, as_strings=False)
+                        new_flops = round(new_flops / 10. ** 9, 3)
+                        new_size = sum(p.numel() for p in model.parameters()) / 1e6
+                    except Exception as e:
+                        print(f'Error while calculating model size: \n{e}')
+                        continue
 
-                # try:
-                new_value = indicator.get_score(model)[args.zero_proxy]
-                # except:
-                #     continue
+                    print(f'Current size {new_size:.1f} M, Current flops {new_flops:.1f} G'
+                          f'\tParam Range [{args.minC} M, {args.maxC} M]'
+                          f'\tFLOPs Range [{args.minflop_C} GFLOPs, {args.maxflop_C} GFLOPs]')
+                    if not (args.maxC >= new_size > args.minC and args.maxflop_C >= new_flops > args.minflop_C):
+                        print(f'    --> Not within size limits. Skipping.')
+                        continue
 
-                print(
-                    f'Current score {new_value}, current size {new_size}M, current flops {new_flops}G')
-                del model
-                torch.cuda.empty_cache()
-                if new_value > iter_best_value and check_valid(new_select):
-                    iter_best_value = new_value
-                    iter_best_size = new_size
-                    select_blocks = new_select
+                    try:
+                        new_value = indicator.get_score(model)[args.zero_proxy]
+                    except Exception as e:
+                        print(f'Error computing zero-shot proxy score: \n{e}')
+                        continue
 
+                    print(f'    --> Current score {new_value:.2f} vs. previous score {iter_best_value:.2f}')
+                    if new_value > iter_best_value and check_valid(new_select):
+                        print(f'    --> new best')
+                        iter_best_value = new_value
+                        iter_best_size = new_size
+                        select_blocks = new_select
+                finally:
+                    del model
+                    torch.cuda.empty_cache()
+
+        print(f"[Iteration {k}]: New (score {iter_best_value}, size {iter_best_size})"
+              f" vs. Previous (score {best_value}, size {best_size})")
         if iter_best_value > best_value:
+            print("    --> NEW BEST")
             best_value = iter_best_value
             best_size = iter_best_size
             best_selected_block = select_blocks
-            print(
-                f"[Iteration {k}], New best_value {best_value}, New size {best_size}, capacity {args.C}")
-        else:
-            print(
-                f"[Iteration {k}], best_value {best_value}, size {best_size}, current value {iter_best_value}, No update")
 
     print(best_selected_block)
     best_selected_block = list(
         sorted(best_selected_block, key=lambda x: x.block_index))
     model = creator.create_hybrid(best_selected_block)
-    assert model is not None, "Searched model can not be none"
-    size = sum(p.numel() for p in model.parameters())/1e6
-    print(f'Final size {size}, capacity {args.C}')
+    assert model is not None, f"Unable to create a model for block configuration: {best_selected_block}"
+    size = sum(p.numel() for p in model.parameters()) / 1e6
+    print(f'Final score {best_value:.2f}; size {size:.1f} M; capacity {args.C} M')
     best_model_cfg = creator.create_hybrid_cfg(best_selected_block)
 
     dataname = data_cfg.data.train.type
-    file_name = f'resaemly_C-{args.C}_FLOPsC-{args.flop_C}_zeroproxy_hybrid_{dataname}-{args.zero_proxy}.py'
+    file_name = f'reassembly_C-{args.C}_FLOPsC-{args.flop_C}_zeroproxy_hybrid_{dataname}-{args.zero_proxy}.py'
     best_model_cfg = Config(dict(model=best_model_cfg))
     print(best_model_cfg.pretty_text)
 

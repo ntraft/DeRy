@@ -1,9 +1,16 @@
 import json
-MODEL_ZOO = ['resnet50', 'resnet101', 'resnet18', 'resnet50mocov2', 'resnet50byol', 'resnet50simclr',
+# MODEL_ZOO = ['resnet50', 'resnet101', 'resnet18', 'resnet50mocov2', 'resnet50byol', 'resnet50simclr',
+#              'swsl_resnext50_32x4d', 'mobilenetv3_large_100',
+#              'vit_small_patch16_224mocov3', 'vit_small_patch16_224', 'vit_base_patch16_224mae', 'vit_base_patch16_224',  'vit_tiny_patch16_224', 'vit_large_patch16_224',
+#              'swin_tiny_patch4_window7_224', 'swin_small_patch4_window7_224', 'swin_base_patch4_window7_224', 'swin_large_patch4_window7_224',
+#              'regnet_y_16gf', 'regnet_y_3_2gf', 'regnet_y_1_6gf', 'regnet_y_8gf', 'regnet_y_32gf', 'regnet_y_800mf']
+
+# Below are the only models that work in the current version of the code.
+MODEL_ZOO = ['resnet50', 'resnet101', 'resnet18',
              'swsl_resnext50_32x4d', 'mobilenetv3_large_100',
-             'vit_small_patch16_224mocov3', 'vit_small_patch16_224', 'vit_base_patch16_224mae', 'vit_base_patch16_224',  'vit_tiny_patch16_224', 'vit_large_patch16_224',
-             'swin_tiny_patch4_window7_224', 'swin_small_patch4_window7_224', 'swin_base_patch4_window7_224', 'swin_large_patch4_window7_224',
-             'regnet_y_16gf', 'regnet_y_3_2gf', 'regnet_y_1_6gf', 'regnet_y_8gf', 'regnet_y_32gf', 'regnet_y_800mf']
+             # 'tf_mobilenetv3_large_075', 'tf_mobilenetv3_small_100',  # Why are these missing from the above list?
+             'vit_small_patch16_224', 'vit_base_patch16_224', 'vit_tiny_patch16_224',  # 'vit_large_patch16_224',
+             'swin_tiny_patch4_window7_224', 'swin_small_patch4_window7_224', 'swin_base_patch4_window7_224', 'swin_large_patch4_window7_224']
 
 
 MODEL_BLOCKS = {

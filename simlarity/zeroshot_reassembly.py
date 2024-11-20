@@ -1,5 +1,7 @@
 import argparse
 import copy
+import warnings
+
 from tkinter.messagebox import NO
 import mmcv
 import pickle
@@ -9,11 +11,14 @@ from mmcv import Config
 from utils import MODEL_ZOO, Block, Block_Assign, Block_Sim
 
 from mmcls.datasets.builder import build_dataloader, build_dataset
-from mmcls_addon import DeRy
+from mmcls_addon import DeRy  # This import causes the registry of the DeRy backbone; do not remove.
 from simlarity.model_creater import Model_Creator
 from simlarity.zero_nas import ZeroNas
 from mmcv.cnn.utils import get_model_complexity_info
 
+
+warnings.filterwarnings("ignore", category=FutureWarning, module="torch")
+warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
 
 input_shape = (3, 224, 224)
 

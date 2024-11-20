@@ -17,6 +17,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def make_meta(args):
     if os.path.exists(args.name_list):
         print(f'Name List Exists {args.name_list}')
@@ -34,6 +35,8 @@ def make_meta(args):
         mmcv.dump(meta, args.name_list)
         print(f'Name List Created {args.name_list}')
     return meta
+
+
 def main():
     args = parse_args()
     # PYTHS = [os.path.join(args.pickle_path, f) for f in os.listdir(args.pickle_path) if f.endswith('pkl')]

@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import torch
@@ -10,11 +11,19 @@ PYTHS = os.listdir(root)
 PYTHS = [os.path.join(root, p) for p in PYTHS if p.endswith('.pth')]
 
 
-def main():
-    # args = parse_args()
-    # PYTHS = [os.path.join(args.pickle_path, f) for f in os.listdir(args.pickle_path) if f.endswith('pkl')]
+def parse_args():
+    parser = argparse.ArgumentParser(description='mmcls test model')
+    parser.add_argument('--feat_path', type=str, help='a path that contains all pickle files that contains the features')
+    parser.add_argument('--out', default='', help='output result file')
+    args = parser.parse_args()
+    return args
 
-    MODEL_INOUT_SHAPE={}
+
+def main():
+    args = parse_args()
+    PYTHS = [os.path.join(args.feat_path, f) for f in os.listdir(args.feat_path) if f.endswith('.pth')]
+
+    MODEL_INOUT_SHAPE = {}
     for pickle in PYTHS:
         data = torch.load(pickle)
         name = data['model_name']
@@ -24,7 +33,7 @@ def main():
         print(f'Get InOut size for {name}')
         
         assert name in MODEL_BLOCKS.keys(), f'{name} must be a valid mode in MODEL_BLOCKS'
-        MODEL_INOUT_SHAPE[name]= dict(in_size=dict(), out_size=dict())
+        MODEL_INOUT_SHAPE[name] = dict(in_size=dict(), out_size=dict())
         for key in data['size'].keys():
             for layer in MODEL_BLOCKS[name]:
                 if key.endswith(layer):
@@ -34,7 +43,7 @@ def main():
 
         del data
     
-    with open('tools/MODEL_INOUT_SHAPE.json', 'w') as fp:
+    with open(os.path.join(args.out, 'MODEL_INOUT_SHAPE.json'), 'w') as fp:
         json.dump(MODEL_INOUT_SHAPE, fp, indent=2)
         
 

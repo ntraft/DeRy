@@ -9,6 +9,7 @@ from mmcv import Config
 from utils import MODEL_ZOO, Block, Block_Assign, Block_Sim
 
 from mmcls.datasets.builder import build_dataloader, build_dataset
+from mmcls_addon import DeRy
 from simlarity.model_creater import Model_Creator
 from simlarity.zero_nas import ZeroNas
 from mmcv.cnn.utils import get_model_complexity_info

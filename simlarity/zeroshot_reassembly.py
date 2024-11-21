@@ -54,7 +54,7 @@ def check_valid(selected_block):
     vit_min = len(selected_block)
     for s in selected_block:
         if s is not None:
-            if (s.model_name.startswith('vit') or s.model_name.startswith('swin')):
+            if s.model_name.startswith('vit') or s.model_name.startswith('swin'):
                 if s.block_index < vit_min:
                     vit_min = s.block_index
             else:
@@ -62,6 +62,10 @@ def check_valid(selected_block):
                     cnn_max = s.block_index
 
     return cnn_max < vit_min
+
+
+def block_str(blocks):
+    return "[\n" + str(["    " + str(b.print_split()) + "\n" for b in blocks]) + "]"
 
 
 # noinspection PyBroadException
@@ -154,12 +158,12 @@ def main():
                     try:
                         new_value = indicator.get_score(model)[args.zero_proxy]
                     except Exception as e:
-                        print(f'Error computing zero-shot proxy score for assembly {new_select}: \n{e}')
+                        print(f'Error computing zero-shot proxy score for assembly: \n{new_select}\n{e}')
                         continue
 
                     print(f'    --> Current score {new_value:.2f} vs. previous score {iter_best_value:.2f}')
                     if new_value > iter_best_value and check_valid(new_select):
-                        print(f'    --> new best {new_select}')
+                        print(f'    --> new best')
                         iter_best_value = new_value
                         iter_best_size = new_size
                         select_blocks = new_select
@@ -170,7 +174,7 @@ def main():
         print(f"[Iteration {k}]: New (score {iter_best_value}, size {iter_best_size})"
               f" vs. Previous (score {best_value}, size {best_size})")
         if iter_best_value > best_value:
-            print(f"    --> NEW BEST {select_blocks}")
+            print(f"    --> NEW BEST {block_str(select_blocks)}")
             best_value = iter_best_value
             best_size = iter_best_size
             best_selected_block = select_blocks
@@ -179,7 +183,7 @@ def main():
     best_selected_block = list(
         sorted(best_selected_block, key=lambda x: x.block_index))
     model = creator.create_hybrid(best_selected_block)
-    assert model is not None, f"Unable to create a model for block configuration: {best_selected_block}"
+    assert model is not None, f"Unable to create a model for block configuration: {block_rep(best_selected_block)}"
     size = sum(p.numel() for p in model.parameters()) / 1e6
     print(f'Final score {best_value:.2f}; size {size:.1f} M; capacity {args.C} M')
     best_model_cfg = creator.create_hybrid_cfg(best_selected_block)

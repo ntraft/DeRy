@@ -91,7 +91,7 @@ class Model_Creator(object):
         adapt_list = []
         # print(downs)
         for bid in range(len(blocks)-1):
-            stride = np.random.choice([1,2], 1, p=[0.9, 0.1])[0]
+            stride = np.random.choice([1, 2], 1, p=[0.9, 0.1])[0]
             
             if len(blocks[bid].out_size) == 3 and len(blocks[bid+1].in_size) == 3:
                 # CNN 2 CNN

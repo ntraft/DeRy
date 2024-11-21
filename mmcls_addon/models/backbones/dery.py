@@ -30,9 +30,9 @@ def network_to_module_subnet(model_name, block_input, block_output, backend, pre
                 model_name, pretrained=False, scriptable=True)
             if os.path.isfile(ckp_path):
                 state_dict = torch.load(ckp_path, map_location='cpu')
-                print(f'Loading checkpoint from {ckp_path}')
+                # print(f'Loading checkpoint from {ckp_path}')
                 miss_keys = backbone.load_state_dict(state_dict, strict=False)
-                print(miss_keys)
+                # print(miss_keys)
             else:
                 print(f'{ckp_path} does not exists')
         else:
@@ -43,14 +43,14 @@ def network_to_module_subnet(model_name, block_input, block_output, backend, pre
             backbone = mytimm.create_model(
                 model_name, pretrained=False, scriptable=True)
             if os.path.isfile(ckp_path) and ckp_path.endswith('pth'):
-                print(f'Loading checkpoint from {ckp_path}')
+                # print(f'Loading checkpoint from {ckp_path}')
                 state_dict = torch.load(ckp_path, map_location='cpu')
                 if 'state_dict' in state_dict.keys():
                     state_dict = state_dict['state_dict']
                 keys = list(state_dict.keys())
                 for key in keys:
-                    if key in ['head.weight', 'head.bias', 'fc.weight', 'fc.bias']:
-                        print(f'removing {key}')
+                    if key in ['head.weight', 'head.bias', 'fc.weight', 'fc.bias', 'head.fc.weight', 'head.fc.bias']:
+                        # print(f'removing {key}')
                         del state_dict[key]
 
                 if prefix is not None:
@@ -66,12 +66,11 @@ def network_to_module_subnet(model_name, block_input, block_output, backend, pre
                     state_dict = new_state_dict
 
                 miss_keys = backbone.load_state_dict(state_dict, strict=False)
-                print(miss_keys)
+                # print(miss_keys)
             elif os.path.isfile(ckp_path) and ckp_path.endswith('npz'):
-                mytimm.models.vision_transformer._load_weights(
-                    backbone, ckp_path)
+                mytimm.models.vision_transformer._load_weights(backbone, ckp_path)
             else:
-                print(f'{ckp_path} does not exists')
+                print(f'{ckp_path} does not exist')
         else:
             backbone = mytimm.create_model(
                 model_name, pretrained=True, scriptable=False)
@@ -81,11 +80,11 @@ def network_to_module_subnet(model_name, block_input, block_output, backend, pre
         backbone = build_backbone(cfg.model.backbone)
         if ckp_path is not None:
             if os.path.isfile(ckp_path):
-                print(f'Loading checkpoint from {ckp_path}')
+                # print(f'Loading checkpoint from {ckp_path}')
                 load_checkpoint(backbone, ckp_path, revise_keys=[(r'^module\.backbone\.', ''),
                                                                  (r'^backbone\.', '')])
             else:
-                print(f'{ckp_path} does not exists')
+                print(f'{ckp_path} does not exist')
         else:
             ckp_path = MODEL_STATS[model_name]['load_from']
             load_checkpoint(backbone, ckp_path, revise_keys=[(r'^module\.backbone\.', ''),
@@ -96,9 +95,9 @@ def network_to_module_subnet(model_name, block_input, block_output, backend, pre
             backbone = getattr(models, model_name)(pretrained=False)
             if os.path.isfile(ckp_path):
                 state_dict = torch.load(ckp_path, map_location='cpu')
-                print(f'Loading checkpoint from {ckp_path}')
+                # print(f'Loading checkpoint from {ckp_path}')
                 miss_keys = backbone.load_state_dict(state_dict, strict=False)
-                print(miss_keys)
+                # print(miss_keys)
             else:
                 print(f'{ckp_path} does not exists')
         else:

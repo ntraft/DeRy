@@ -21,6 +21,8 @@ from mmcv.cnn.utils import get_model_complexity_info
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch")
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision")
 logging.getLogger("mmcv").setLevel(logging.ERROR)
+logging.getLogger("third_package.timm.models.helpers").setLevel(logging.ERROR)
+logging.getLogger("timm.models.helpers").setLevel(logging.ERROR)
 
 input_shape = (3, 224, 224)
 
@@ -65,7 +67,7 @@ def check_valid(selected_block):
 
 
 def block_str(blocks):
-    return "[\n" + str(["    " + str(b.print_split()) + "\n" for b in blocks]) + "]"
+    return "[\n" + "\n".join(["    " + str(b.print_split()) for b in blocks]) + "\n]"
 
 
 # noinspection PyBroadException
@@ -158,7 +160,7 @@ def main():
                     try:
                         new_value = indicator.get_score(model)[args.zero_proxy]
                     except Exception as e:
-                        print(f'Error computing zero-shot proxy score for assembly: \n{new_select}\n{e}')
+                        print(f'Error computing zero-shot proxy score for assembly: \n{block_str(new_select)}\nError: {e}')
                         continue
 
                     print(f'    --> Current score {new_value:.2f} vs. previous score {iter_best_value:.2f}')
@@ -168,7 +170,8 @@ def main():
                         iter_best_size = new_size
                         select_blocks = new_select
                 finally:
-                    del model
+                    if "model" in locals():
+                        del model
                     torch.cuda.empty_cache()
 
         print(f"[Iteration {k}]: New (score {iter_best_value}, size {iter_best_size})"

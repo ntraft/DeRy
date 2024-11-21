@@ -154,12 +154,12 @@ def main():
                     try:
                         new_value = indicator.get_score(model)[args.zero_proxy]
                     except Exception as e:
-                        print(f'Error computing zero-shot proxy score: \n{e}')
+                        print(f'Error computing zero-shot proxy score for assembly {new_select}: \n{e}')
                         continue
 
                     print(f'    --> Current score {new_value:.2f} vs. previous score {iter_best_value:.2f}')
                     if new_value > iter_best_value and check_valid(new_select):
-                        print(f'    --> new best')
+                        print(f'    --> new best {new_select}')
                         iter_best_value = new_value
                         iter_best_size = new_size
                         select_blocks = new_select
@@ -170,7 +170,7 @@ def main():
         print(f"[Iteration {k}]: New (score {iter_best_value}, size {iter_best_size})"
               f" vs. Previous (score {best_value}, size {best_size})")
         if iter_best_value > best_value:
-            print("    --> NEW BEST")
+            print(f"    --> NEW BEST {select_blocks}")
             best_value = iter_best_value
             best_size = iter_best_size
             best_selected_block = select_blocks

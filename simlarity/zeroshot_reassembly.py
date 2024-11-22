@@ -165,7 +165,7 @@ def main():
                           f'\tParam Range [{args.minC} M, {args.maxC} M]'
                           f'\tFLOPs Range [{args.minflop_C} GFLOPs, {args.maxflop_C} GFLOPs]')
                     if not (args.maxC >= new_size > args.minC and args.maxflop_C >= new_flops > args.minflop_C):
-                        print(f'    --> Not within size limits. Skipping.')
+                        print(f'Not within size limits. Skipping.')
                         continue
 
                     try:

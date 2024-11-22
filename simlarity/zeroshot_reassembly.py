@@ -122,6 +122,7 @@ def main():
                 new_select = copy.deepcopy(select_blocks)
                 new_select[block.block_index] = block
                 if check_valid(new_select):
+                    print(f"    --> Assigning block {block.block_index} to {block.print_split()}")
                     select_blocks = new_select
                     selected_group[block.group_id] = 1
                     selected_block_index[block.block_index] = 1

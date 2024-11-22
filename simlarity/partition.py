@@ -148,12 +148,10 @@ def init_partition(args):
             i1 = node_split[k]
             if k == args.K-1:
                 block = Block(model_name, k, list(node_indexs[i1:]))
-                block_split_dict[model_name].append(block)
             else:
                 i2 = node_split[k+1]
-                block = Block(model_name, k, list(
-                    node_indexs[i1:i2]))
-                block_split_dict[model_name].append(block)
+                block = Block(model_name, k, list(node_indexs[i1:i2]))
+            block_split_dict[model_name].append(block)
 
         assert len(block_split_dict[model_name]) == args.K
 

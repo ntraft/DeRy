@@ -110,9 +110,14 @@ def main():
         select_blocks = [None for _ in range(K)]
         iter_best_value = 0
         iter_best_size = 0
-        for block in all_blocks:
+        for i, block in enumerate(all_blocks):
+            print(f"Block Step {i}/{len(all_blocks)}: Block Index {block.block_index}")
 
+            # NTRAFT NOTE: These variables always have the same value, so they literally could be just one variable.
+            # The group_id appears to have no impact. Which means blocks are always assigned to their original parition
+            # index. Contrary to what the algorithm says, they cannot be placed in a different index.
             if selected_group[block.group_id] == 0 and selected_block_index[block.block_index] == 0:
+                print(f"No block at this index.")
                 # No block has been selected at this position
                 new_select = copy.deepcopy(select_blocks)
                 new_select[block.block_index] = block
@@ -122,23 +127,28 @@ def main():
                     selected_block_index[block.block_index] = 1
 
             else:
+                print(f"Attempting to replace {select_blocks[block.block_index].print_split()}"
+                      f" with {block.print_split()}.")
                 new_select = copy.deepcopy(select_blocks)
                 # check repeat and remove
-                for i, b in enumerate(select_blocks):
+                # NTRAFT NOTE: The below code has no effect. No matter what happens here, the new block will always
+                # replace the same index. The selection values will always end up as = 1.
+                for b in select_blocks:
                     if b is not None:
                         if b.block_index == block.block_index or b.group_id == block.group_id:
                             new_select[block.block_index] = None
-                            selected_block_index[b.block_index] = 0
                             selected_group[b.group_id] = 0
+                            selected_block_index[b.block_index] = 0
 
                 # append new block in
                 new_select[block.block_index] = block
-                selected_block_index[block.block_index] = 1
                 selected_group[block.group_id] = 1
+                selected_block_index[block.block_index] = 1
                 # if check_valid(new_select):
                 try:
                     model = creator.create_hybrid(new_select)
                     if model is None:
+                        print(f"Not all blocks are assigned yet, so cannot test.")
                         continue
 
                     try:
@@ -163,7 +173,7 @@ def main():
                         print(f'Error computing zero-shot proxy score for assembly: \n{block_str(new_select)}\nError: {e}')
                         continue
 
-                    print(f'    --> Current score {new_value:.2f} vs. previous score {iter_best_value:.2f}')
+                    print(f'Current score {new_value:.2f} vs. previous score {iter_best_value:.2f}')
                     if new_value > iter_best_value and check_valid(new_select):
                         print(f'    --> new best')
                         iter_best_value = new_value

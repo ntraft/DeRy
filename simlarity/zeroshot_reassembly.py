@@ -137,6 +137,7 @@ def main():
                 for b in select_blocks:
                     if b is not None:
                         if b.block_index == block.block_index or b.group_id == block.group_id:
+                            # TODO: Maybe print that a group is being invalidated if b.group_id != block.group_id?
                             new_select[block.block_index] = None
                             selected_group[b.group_id] = 0
                             selected_block_index[b.block_index] = 0
@@ -192,12 +193,13 @@ def main():
             best_value = iter_best_value
             best_size = iter_best_size
             best_selected_block = select_blocks
+        print("")  # Blank line for each iteration.
 
     print(best_selected_block)
     best_selected_block = list(
         sorted(best_selected_block, key=lambda x: x.block_index))
     model = creator.create_hybrid(best_selected_block)
-    assert model is not None, f"Unable to create a model for block configuration: {block_rep(best_selected_block)}"
+    assert model is not None, f"Unable to create a model for block configuration: {block_str(best_selected_block)}"
     size = sum(p.numel() for p in model.parameters()) / 1e6
     print(f'Final score {best_value:.2f}; size {size:.1f} M; capacity {args.C} M')
     best_model_cfg = creator.create_hybrid_cfg(best_selected_block)

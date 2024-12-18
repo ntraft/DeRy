@@ -1,0 +1,7 @@
+outputs
+data
+work_dirs
+MODEL_INOUT_SHAPE.json
+
+.ipynb_checkpoints/
+
